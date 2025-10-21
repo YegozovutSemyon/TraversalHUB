@@ -12,7 +12,6 @@ local gui
 local crosshair
 local currentTarget
 
--- Modern color scheme
 local Colors = {
     Background = Color3.fromRGB(28, 28, 30),
     Surface = Color3.fromRGB(44, 44, 46),
@@ -23,7 +22,7 @@ local Colors = {
     Subtext = Color3.fromRGB(142, 142, 147)
 }
 
--- Create main GUI
+
 local function createGUI()
     if gui then gui:Destroy() end
     
@@ -31,7 +30,6 @@ local function createGUI()
     gui.Name = "ModernDeleteTool"
     gui.Parent = player.PlayerGui
     
-    -- Control Panel
     local controlPanel = Instance.new("Frame")
     controlPanel.Size = UDim2.new(0, 400, 0, 60)
     controlPanel.Position = UDim2.new(0.5, -200, 0, 20)
@@ -50,7 +48,6 @@ local function createGUI()
     controlStroke.Transparency = 0.7
     controlStroke.Parent = controlPanel
     
-    -- Delete Mode Toggle
     local toggleContainer = Instance.new("Frame")
     toggleContainer.Size = UDim2.new(0, 120, 1, 0)
     toggleContainer.Position = UDim2.new(0, 10, 0, 0)
@@ -77,7 +74,6 @@ local function createGUI()
     toggleStatus.Font = Enum.Font.GothamBold
     toggleStatus.Parent = toggleContainer
     
-    -- Path Input Box
     local pathInputContainer = Instance.new("Frame")
     pathInputContainer.Size = UDim2.new(0, 250, 1, 0)
     pathInputContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -118,7 +114,6 @@ local function createGUI()
     pathStroke.Transparency = 0.5
     pathStroke.Parent = pathInput
     
-    -- Target Info
     local targetInfo = Instance.new("Frame")
     targetInfo.Size = UDim2.new(0, 220, 0, 70)
     targetInfo.Position = UDim2.new(0.5, -440, 0, 20)
@@ -142,7 +137,7 @@ local function createGUI()
     targetIcon.Size = UDim2.new(0, 30, 0, 30)
     targetIcon.Position = UDim2.new(0, 10, 0, 10)
     targetIcon.BackgroundTransparency = 1
-    targetIcon.Text = "🎯"
+    targetIcon.Text = "T"
     targetIcon.TextColor3 = Colors.Text
     targetIcon.TextSize = 18
     targetIcon.Font = Enum.Font.GothamBold
@@ -180,7 +175,6 @@ local function createGUI()
     deleteHint.Font = Enum.Font.GothamBold
     deleteHint.Parent = targetInfo
     
-    -- Crosshair
     crosshair = Instance.new("Frame")
     crosshair.Size = UDim2.new(0, 24, 0, 24)
     crosshair.Position = UDim2.new(0.5, -12, 0.5, -12)
@@ -227,10 +221,8 @@ local function getObjectFromPath(path)
     local success, result = pcall(function()
         if not path:match("^workspace") then return nil end
 
-        -- Wrap path in "return" and load it
         local f = load("return " .. path)
         if f then
-            -- Set environment so workspace exists
             setfenv(f, {workspace = workspace})
             return f()
         end
@@ -245,7 +237,6 @@ local function getObjectFromPath(path)
 end
 
 
--- Delete by path
 local function deleteObjectByPath(path)
     local object = getObjectFromPath(path)
     if object then
@@ -289,7 +280,6 @@ local function deleteObjectByPath(path)
     return false
 end
 
--- Delete current target
 local function deleteCurrentTarget()
     if currentTarget then
         local success = pcall(function()
@@ -318,7 +308,6 @@ local function deleteCurrentTarget()
     return false
 end
 
--- Update UI
 local function updateUIState()
     if deleteMode then
         ui.toggleStatus.Text = "ON"
@@ -333,7 +322,6 @@ local function updateUIState()
     end
 end
 
--- Target highlighting
 local function updateTargetHighlight(target)
     if highlight then
         highlight:Destroy()
@@ -358,7 +346,6 @@ local function updateTargetHighlight(target)
     end
 end
 
--- Input Handlers
 mouse.Move:Connect(function()
     if not deleteMode then return end
     updateTargetHighlight(mouse.Target)
@@ -382,7 +369,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- Path input handler
 ui.pathInput.FocusLost:Connect(function(enterPressed)
     if enterPressed then
         local path = ui.pathInput.Text
@@ -392,11 +378,4 @@ ui.pathInput.FocusLost:Connect(function(enterPressed)
     end
 end)
 
--- Initial setup
 updateUIState()
-
-print("🎯 Modern Delete Tool Loaded!")
-print("• Q - Toggle Delete Mode")
-print("• E - Delete Targeted Object")
-print("• Enter - Delete object by path")
-print("• Examples: workspace.Part, workspace.Model.Axe, workspace.Folder:GetChildren()[1]")
