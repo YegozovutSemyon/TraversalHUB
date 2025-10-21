@@ -1,0 +1,386 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local magicChar = string.char(24)
+local deleteMode = false
+local highlight
+local gui
+local crosshair
+local currentTarget
+
+-- Modern color scheme
+local Colors = {
+    Background = Color3.fromRGB(28, 28, 30),
+    Surface = Color3.fromRGB(44, 44, 46),
+    Primary = Color3.fromRGB(0, 122, 255),
+    Danger = Color3.fromRGB(255, 59, 48),
+    Success = Color3.fromRGB(52, 199, 89),
+    Text = Color3.fromRGB(242, 242, 247),
+    Subtext = Color3.fromRGB(142, 142, 147)
+}
+
+-- Create main GUI
+local function createGUI()
+    if gui then gui:Destroy() end
+    
+    gui = Instance.new("ScreenGui")
+    gui.Name = "ModernDeleteTool"
+    gui.Parent = player.PlayerGui
+    
+    -- Control Panel
+    local controlPanel = Instance.new("Frame")
+    controlPanel.Size = UDim2.new(0, 400, 0, 60)
+    controlPanel.Position = UDim2.new(0.5, -200, 0, 20)
+    controlPanel.BackgroundColor3 = Colors.Surface
+    controlPanel.BackgroundTransparency = 0.3
+    controlPanel.BorderSizePixel = 0
+    controlPanel.Parent = gui
+    
+    local controlCorner = Instance.new("UICorner")
+    controlCorner.CornerRadius = UDim.new(0, 12)
+    controlCorner.Parent = controlPanel
+    
+    local controlStroke = Instance.new("UIStroke")
+    controlStroke.Color = Color3.fromRGB(100, 100, 100)
+    controlStroke.Thickness = 1
+    controlStroke.Transparency = 0.7
+    controlStroke.Parent = controlPanel
+    
+    -- Delete Mode Toggle
+    local toggleContainer = Instance.new("Frame")
+    toggleContainer.Size = UDim2.new(0, 120, 1, 0)
+    toggleContainer.Position = UDim2.new(0, 10, 0, 0)
+    toggleContainer.BackgroundTransparency = 1
+    toggleContainer.Parent = controlPanel
+    
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(1, 0, 0, 20)
+    toggleLabel.Position = UDim2.new(0, 0, 0, 8)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = "DELETE MODE"
+    toggleLabel.TextColor3 = Colors.Subtext
+    toggleLabel.TextSize = 11
+    toggleLabel.Font = Enum.Font.GothamBold
+    toggleLabel.Parent = toggleContainer
+    
+    local toggleStatus = Instance.new("TextLabel")
+    toggleStatus.Size = UDim2.new(1, 0, 0, 24)
+    toggleStatus.Position = UDim2.new(0, 0, 0, 28)
+    toggleStatus.BackgroundTransparency = 1
+    toggleStatus.Text = "OFF"
+    toggleStatus.TextColor3 = Colors.Danger
+    toggleStatus.TextSize = 16
+    toggleStatus.Font = Enum.Font.GothamBold
+    toggleStatus.Parent = toggleContainer
+    
+    -- Path Input Box
+    local pathInputContainer = Instance.new("Frame")
+    pathInputContainer.Size = UDim2.new(0, 250, 1, 0)
+    pathInputContainer.Position = UDim2.new(1, -260, 0, 0)
+    pathInputContainer.BackgroundTransparency = 1
+    pathInputContainer.Parent = controlPanel
+    
+    local pathLabel = Instance.new("TextLabel")
+    pathLabel.Size = UDim2.new(1, 0, 0, 20)
+    pathLabel.Position = UDim2.new(0, 0, 0, 8)
+    pathLabel.BackgroundTransparency = 1
+    pathLabel.Text = "OBJECT PATH"
+    pathLabel.TextColor3 = Colors.Subtext
+    pathLabel.TextSize = 11
+    pathLabel.Font = Enum.Font.GothamBold
+    pathLabel.Parent = pathInputContainer
+    
+    local pathInput = Instance.new("TextBox")
+    pathInput.Size = UDim2.new(1, 0, 0, 28)
+    pathInput.Position = UDim2.new(0, 0, 0, 28)
+    pathInput.BackgroundColor3 = Colors.Background
+    pathInput.BackgroundTransparency = 0.3
+    pathInput.Text = ""
+    pathInput.PlaceholderText = "workspace.Part or path..."
+    pathInput.TextColor3 = Colors.Text
+    pathInput.PlaceholderColor3 = Colors.Subtext
+    pathInput.TextSize = 12
+    pathInput.Font = Enum.Font.Gotham
+    pathInput.TextXAlignment = Enum.TextXAlignment.Left
+    pathInput.Parent = pathInputContainer
+    
+    local pathCorner = Instance.new("UICorner")
+    pathCorner.CornerRadius = UDim.new(0, 6)
+    pathCorner.Parent = pathInput
+    
+    local pathStroke = Instance.new("UIStroke")
+    pathStroke.Color = Colors.Primary
+    pathStroke.Thickness = 1
+    pathStroke.Transparency = 0.5
+    pathStroke.Parent = pathInput
+    
+    -- Target Info
+    local targetInfo = Instance.new("Frame")
+    targetInfo.Size = UDim2.new(0, 220, 0, 70)
+    targetInfo.Position = UDim2.new(0.5, -440, 0, 20)
+    targetInfo.BackgroundColor3 = Colors.Surface
+    targetInfo.BackgroundTransparency = 0.3
+    targetInfo.BorderSizePixel = 0
+    targetInfo.Visible = false
+    targetInfo.Parent = gui
+    
+    local targetCorner = Instance.new("UICorner")
+    targetCorner.CornerRadius = UDim.new(0, 12)
+    targetCorner.Parent = targetInfo
+    
+    local targetStroke = Instance.new("UIStroke")
+    targetStroke.Color = Colors.Danger
+    targetStroke.Thickness = 2
+    targetStroke.Transparency = 0.5
+    targetStroke.Parent = targetInfo
+    
+    local targetIcon = Instance.new("TextLabel")
+    targetIcon.Size = UDim2.new(0, 30, 0, 30)
+    targetIcon.Position = UDim2.new(0, 10, 0, 10)
+    targetIcon.BackgroundTransparency = 1
+    targetIcon.Text = "T"
+    targetIcon.TextColor3 = Colors.Text
+    targetIcon.TextSize = 18
+    targetIcon.Font = Enum.Font.GothamBold
+    targetIcon.Parent = targetInfo
+    
+    local targetName = Instance.new("TextLabel")
+    targetName.Size = UDim2.new(1, -50, 0, 20)
+    targetName.Position = UDim2.new(0, 45, 0, 10)
+    targetName.BackgroundTransparency = 1
+    targetName.Text = "No target"
+    targetName.TextColor3 = Colors.Text
+    targetName.TextSize = 14
+    targetName.Font = Enum.Font.GothamBold
+    targetName.TextXAlignment = Enum.TextXAlignment.Left
+    targetName.Parent = targetInfo
+    
+    local targetClass = Instance.new("TextLabel")
+    targetClass.Size = UDim2.new(1, -50, 0, 16)
+    targetClass.Position = UDim2.new(0, 45, 0, 32)
+    targetClass.BackgroundTransparency = 1
+    targetClass.Text = "Aim at an object"
+    targetClass.TextColor3 = Colors.Subtext
+    targetClass.TextSize = 11
+    targetClass.Font = Enum.Font.Gotham
+    targetClass.TextXAlignment = Enum.TextXAlignment.Left
+    targetClass.Parent = targetInfo
+    
+    local deleteHint = Instance.new("TextLabel")
+    deleteHint.Size = UDim2.new(1, -20, 0, 14)
+    deleteHint.Position = UDim2.new(0, 10, 1, -20)
+    deleteHint.BackgroundTransparency = 1
+    deleteHint.Text = "Press E to delete • Q to toggle mode"
+    deleteHint.TextColor3 = Colors.Danger
+    deleteHint.TextSize = 10
+    deleteHint.Font = Enum.Font.GothamBold
+    deleteHint.Parent = targetInfo
+    
+    -- Crosshair
+    crosshair = Instance.new("Frame")
+    crosshair.Size = UDim2.new(0, 24, 0, 24)
+    crosshair.Position = UDim2.new(0.5, -12, 0.5, -12)
+    crosshair.BackgroundTransparency = 1
+    crosshair.Visible = false
+    crosshair.Parent = gui
+    
+    local outerCircle = Instance.new("Frame")
+    outerCircle.Size = UDim2.new(1, 0, 1, 0)
+    outerCircle.BackgroundTransparency = 1
+    outerCircle.Parent = crosshair
+    
+    local circleStroke = Instance.new("UIStroke")
+    circleStroke.Color = Colors.Text
+    circleStroke.Thickness = 2
+    circleStroke.Parent = outerCircle
+    
+    local innerDot = Instance.new("Frame")
+    innerDot.Size = UDim2.new(0, 4, 0, 4)
+    innerDot.Position = UDim2.new(0.5, -2, 0.5, -2)
+    innerDot.BackgroundColor3 = Colors.Text
+    innerDot.BorderSizePixel = 0
+    innerDot.Parent = crosshair
+    
+    local dotCorner = Instance.new("UICorner")
+    dotCorner.CornerRadius = UDim.new(1, 0)
+    dotCorner.Parent = innerDot
+    
+    return {
+        controlPanel = controlPanel,
+        toggleStatus = toggleStatus,
+        pathInput = pathInput,
+        targetInfo = targetInfo,
+        targetName = targetName,
+        targetClass = targetClass,
+        deleteHint = deleteHint,
+        crosshair = crosshair
+    }
+end
+
+local ui = createGUI()
+
+local function getObjectFromPath(path)
+    local success, result = pcall(function()
+        if not path:match("^workspace") then return nil end
+
+        local f = load("return " .. path)
+        if f then
+            setfenv(f, {workspace = workspace})
+            return f()
+        end
+        return nil
+    end)
+
+    if success then
+        return result
+    else
+        return nil
+    end
+end
+
+local function deleteObjectByPath(path)
+    local object = getObjectFromPath(path)
+    if object then
+        local success = pcall(function()
+            local args = {
+                [1] = {
+                    [1] = {
+                        [1] = magicChar,
+                        [2] = object,
+                        [3] = math.huge
+                    }
+                }
+            }
+            game:GetService("ReplicatedStorage").RemoteEvent:FireServer(unpack(args))
+        end)
+        
+        if success then
+            ui.pathInput.Text = "✅ Deleted: " .. object.Name
+            ui.pathInput.TextColor3 = Colors.Success
+            task.delay(2, function()
+                ui.pathInput.Text = ""
+                ui.pathInput.TextColor3 = Colors.Text
+            end)
+            return true
+        else
+            ui.pathInput.Text = "❌ Failed to delete"
+            ui.pathInput.TextColor3 = Colors.Danger
+            task.delay(2, function()
+                ui.pathInput.Text = ""
+                ui.pathInput.TextColor3 = Colors.Text
+            end)
+        end
+    else
+        ui.pathInput.Text = "❌ Object not found"
+        ui.pathInput.TextColor3 = Colors.Danger
+        task.delay(2, function()
+            ui.pathInput.Text = ""
+            ui.pathInput.TextColor3 = Colors.Text
+        end)
+    end
+    return false
+end
+
+local function deleteCurrentTarget()
+    if currentTarget then
+        local success = pcall(function()
+            local args = {
+                [1] = {
+                    [1] = {
+                        [1] = magicChar,
+                        [2] = currentTarget,
+                        [3] = math.huge
+                    }
+                }
+            }
+            game:GetService("ReplicatedStorage").RemoteEvent:FireServer(unpack(args))
+        end)
+        
+        if success then
+            if highlight then
+                highlight:Destroy()
+                highlight = nil
+            end
+            currentTarget = nil
+            ui.targetInfo.Visible = false
+            return true
+        end
+    end
+    return false
+end
+
+local function updateUIState()
+    if deleteMode then
+        ui.toggleStatus.Text = "ON"
+        ui.toggleStatus.TextColor3 = Colors.Success
+        ui.crosshair.Visible = true
+        ui.targetInfo.Visible = currentTarget ~= nil
+    else
+        ui.toggleStatus.Text = "OFF"
+        ui.toggleStatus.TextColor3 = Colors.Danger
+        ui.crosshair.Visible = false
+        ui.targetInfo.Visible = false
+    end
+end
+
+local function updateTargetHighlight(target)
+    if highlight then
+        highlight:Destroy()
+        highlight = nil
+    end
+    
+    if target and target:IsA("BasePart") then
+        highlight = Instance.new("Highlight")
+        highlight.FillColor = Colors.Danger
+        highlight.FillTransparency = 0.8
+        highlight.OutlineColor = Colors.Text
+        highlight.Adornee = target
+        highlight.Parent = target
+        currentTarget = target
+        
+        ui.targetName.Text = target.Name
+        ui.targetClass.Text = target.ClassName
+        ui.targetInfo.Visible = true
+    else
+        currentTarget = nil
+        ui.targetInfo.Visible = false
+    end
+end
+
+mouse.Move:Connect(function()
+    if not deleteMode then return end
+    updateTargetHighlight(mouse.Target)
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.Q then
+        deleteMode = not deleteMode
+        updateUIState()
+        
+        if not deleteMode and highlight then
+            highlight:Destroy()
+            highlight = nil
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode.E and deleteMode and currentTarget then
+        deleteCurrentTarget()
+    end
+end)
+
+ui.pathInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local path = ui.pathInput.Text
+        if path and path ~= "" then
+            deleteObjectByPath(path)
+        end
+    end
+end)
+
+updateUIState()
