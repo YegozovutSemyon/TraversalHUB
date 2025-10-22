@@ -64,7 +64,7 @@ local Button = PlayerTab:CreateButton({
 
     end,
 })
-local Label = PlayerTab:CreateLabel("TO USE DELETE BY PATH, USE INFINITE YILED, AND EXECUTE "Dex" Command", "message-circle-warning")
+local Label = PlayerTab:CreateLabel("TO USE DELETE BY PATH, USE INFINITE YILED, AND EXECUTE "Dex" Command", "info")
 local Label = PlayerTab:CreateLabel("• V - Toggle Delete Mode", "info")
 local Label = PlayerTab:CreateLabel("• E - Delete Targeted Object", "info")
 local Label = PlayerTab:CreateLabel("• Enter - Delete object by path", "info")
