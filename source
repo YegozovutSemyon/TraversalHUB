@@ -202,8 +202,8 @@ local weaponsToSpawn = {
     "Axe",
     "Machete",
     "Crowbar",
-    "Chainsaw"
-    "Katana"
+    "Chainsaw",
+    "Katana",
 }
 
 for _, weaponName in pairs(weaponsToSpawn) do
