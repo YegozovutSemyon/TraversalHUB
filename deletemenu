@@ -22,7 +22,6 @@ local Colors = {
     Subtext = Color3.fromRGB(142, 142, 147)
 }
 
-
 local function createGUI()
     if gui then gui:Destroy() end
     
@@ -221,7 +220,7 @@ local function getObjectFromPath(path)
     local success, result = pcall(function()
         if not path:match("^workspace") then return nil end
 
-        local f = load("return " .. path)
+        local f = loadstring("return " .. path)
         if f then
             setfenv(f, {workspace = workspace})
             return f()
@@ -236,9 +235,9 @@ local function getObjectFromPath(path)
     end
 end
 
-
 local function deleteObjectByPath(path)
     local object = getObjectFromPath(path)
+    
     if object then
         local success = pcall(function()
             local args = {
