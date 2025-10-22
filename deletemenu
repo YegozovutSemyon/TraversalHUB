@@ -3,6 +3,17 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
+
+local UNIQUE_IDENTIFIER = "ModernDeleteTool_InstanceGuard"
+if player.PlayerGui:FindFirstChild(UNIQUE_IDENTIFIER) then
+    return -- Stop execution if the guard object already exists
+end
+
+local guard = Instance.new("Folder")
+guard.Name = UNIQUE_IDENTIFIER
+guard.Parent = player.PlayerGui
+-- ===================================
+
 local mouse = player:GetMouse()
 
 local magicChar = string.char(24)
@@ -23,8 +34,10 @@ local Colors = {
 }
 
 local function createGUI()
-    if gui then gui:Destroy() end
-    
+    -- Your original code for destroying an existing gui is a good fallback, 
+    -- but the multi-execution check above should prevent the need for it.
+    -- if gui then gui:Destroy() end 
+
     gui = Instance.new("ScreenGui")
     gui.Name = "ModernDeleteTool"
     gui.Parent = player.PlayerGui
